@@ -7,10 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
-      const response = await fetch("/activities");
+      const response = await fetch("/activities", { cache: "no-store" });
       const activities = await response.json();
 
-      // Clear loading message
       activitiesList.innerHTML = "";
 
       // Remove old activity options while keeping the placeholder
@@ -24,37 +23,52 @@ document.addEventListener("DOMContentLoaded", () => {
         activityCard.className = "activity-card";
 
         const spotsLeft = details.max_participants - details.participants.length;
+        const title = document.createElement("h4");
+        title.textContent = name;
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
+        const description = document.createElement("p");
+        description.className = "activity-description";
+        description.textContent = details.description;
+
+        const schedule = document.createElement("p");
+        schedule.className = "activity-detail";
+        const scheduleLabel = document.createElement("strong");
+        scheduleLabel.textContent = "Schedule: ";
+        schedule.append(scheduleLabel, document.createTextNode(details.schedule));
+
+        const availability = document.createElement("p");
+        availability.className = "activity-detail";
+        const availabilityLabel = document.createElement("strong");
+        availabilityLabel.textContent = "Availability: ";
+        availability.append(
+          availabilityLabel,
+          document.createTextNode(`${spotsLeft} spots left`)
+        );
 
         const participantsSection = document.createElement("div");
         participantsSection.className = "participants-section";
 
         const participantsHeading = document.createElement("h5");
-        participantsHeading.textContent = "Participants";
-        participantsSection.appendChild(participantsHeading);
+        participantsHeading.textContent = `Participants (${details.participants.length})`;
 
-        if (details.participants.length > 0) {
-          const participantsList = document.createElement("ul");
+        const participantsList = document.createElement("ul");
+        participantsList.className = "participants-list";
+
+        if (details.participants.length === 0) {
+          const emptyItem = document.createElement("li");
+          emptyItem.className = "no-participants";
+          emptyItem.textContent = "No participants yet";
+          participantsList.appendChild(emptyItem);
+        } else {
           details.participants.forEach((participant) => {
             const participantItem = document.createElement("li");
             participantItem.textContent = participant;
             participantsList.appendChild(participantItem);
           });
-          participantsSection.appendChild(participantsList);
-        } else {
-          const emptyMessage = document.createElement("p");
-          emptyMessage.className = "no-participants";
-          emptyMessage.textContent = "No participants yet.";
-          participantsSection.appendChild(emptyMessage);
         }
 
-        activityCard.appendChild(participantsSection);
+        participantsSection.append(participantsHeading, participantsList);
+        activityCard.append(title, description, schedule, availability, participantsSection);
         activitiesList.appendChild(activityCard);
 
         // Add option to select dropdown
